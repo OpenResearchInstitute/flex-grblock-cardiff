@@ -22,10 +22,10 @@
 
 import numpy
 from gnuradio import gr
-from FlexModule.SmartLink import SmartLink
-from FlexModule.Radio import Radio
+from flexclient.SmartLink import SmartLink
+from flexclient.Radio import Radio
 from time import sleep
-import FlexModule.DataHandler
+import flexclient.DataHandler
 
 class FlexSource(gr.sync_block):
     """
@@ -45,7 +45,7 @@ class FlexSource(gr.sync_block):
         self.flexRadio = Radio(self.radioInfo, self.smartLink)
 
         if self.flexRadio.serverHandle:
-            receiveThread = FlexModule.DataHandler.ReceiveData(self.flexRadio)
+            receiveThread = flexclient.DataHandler.ReceiveData(self.flexRadio)
             receiveThread.start()
 
             self.flexRadio.UpdateAntList()
