@@ -5,4 +5,7 @@ in which you piece together predefined functions and operations to develop your 
 
 This code provides an implementation of a receive block for the FlexRadio 6K series. It depends upon the flexclient python module, which can be installed with pip.
 
+Contributors:
+
+We use the black code formatter for consistency, please check your formatting before submitting pull requests
 

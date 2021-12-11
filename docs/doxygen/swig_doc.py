@@ -34,13 +34,15 @@ import sys, time
 from doxyxml import DoxyIndex, DoxyClass, DoxyFriend, DoxyFunction, DoxyFile
 from doxyxml import DoxyOther, base
 
+
 def py_name(name):
-    bits = name.split('_')
-    return '_'.join(bits[1:])
+    bits = name.split("_")
+    return "_".join(bits[1:])
+
 
 def make_name(name):
-    bits = name.split('_')
-    return bits[0] + '_make_' + '_'.join(bits[1:])
+    bits = name.split("_")
+    return bits[0] + "_make_" + "_".join(bits[1:])
 
 
 class Block(object):
@@ -62,6 +64,7 @@ class Block(object):
             is_a_block = di.has_member(friendname, DoxyFunction)
         return is_a_block
 
+
 class Block2(object):
     """
     Checks if doxyxml produced objects correspond to a new style
@@ -75,7 +78,9 @@ class Block2(object):
         # Check for a parsing error.
         if item.error():
             return False
-        is_a_block2 = item.has_member('make', DoxyFunction) and item.has_member('sptr', DoxyOther)
+        is_a_block2 = item.has_member("make", DoxyFunction) and item.has_member(
+            "sptr", DoxyOther
+        )
         return is_a_block2
 
 
@@ -84,11 +89,11 @@ def utoascii(text):
     Convert unicode text into ascii and escape quotes and backslashes.
     """
     if text is None:
-        return ''
-    out = text.encode('ascii', 'replace')
+        return ""
+    out = text.encode("ascii", "replace")
     # swig will require us to replace blackslash with 4 backslashes
-    out = out.replace(b'\\', b'\\\\\\\\')
-    out = out.replace(b'"', b'\\"').decode('ascii')
+    out = out.replace(b"\\", b"\\\\\\\\")
+    out = out.replace(b'"', b'\\"').decode("ascii")
     return str(out)
 
 
@@ -103,16 +108,20 @@ def combine_descriptions(obj):
         description.append(bd)
     if dd:
         description.append(dd)
-    return utoascii('\n\n'.join(description)).strip()
+    return utoascii("\n\n".join(description)).strip()
+
 
 def format_params(parameteritems):
-    output = ['Args:']
-    template = '    {0} : {1}'
+    output = ["Args:"]
+    template = "    {0} : {1}"
     for pi in parameteritems:
         output.append(template.format(pi.name, pi.description))
-    return '\n'.join(output)
+    return "\n".join(output)
+
 
 entry_templ = '%feature("docstring") {name} "{docstring}"'
+
+
 def make_entry(obj, name=None, templ="{description}", description=None, params=[]):
     """
     Create a docstring entry for a swig interface file.
@@ -125,21 +134,21 @@ def make_entry(obj, name=None, templ="{description}", description=None, params=[
             used as the description instead of extracting it from obj.
     """
     if name is None:
-        name=obj.name()
+        name = obj.name()
     if "operator " in name:
-        return ''
+        return ""
     if description is None:
         description = combine_descriptions(obj)
     if params:
-        description += '\n\n'
+        description += "\n\n"
         description += utoascii(format_params(params))
     docstring = templ.format(description=description)
     if not docstring:
-        return ''
+        return ""
     return entry_templ.format(
         name=name,
         docstring=docstring,
-        )
+    )
 
 
 def make_func_entry(func, name=None, description=None, params=None):
@@ -152,15 +161,15 @@ def make_func_entry(func, name=None, description=None, params=None):
             used as the description instead of extracting it from func.
     params - a parameter list that overrides using func.params.
     """
-    #if params is None:
+    # if params is None:
     #    params = func.params
-    #params = [prm.declname for prm in params]
-    #if params:
+    # params = [prm.declname for prm in params]
+    # if params:
     #    sig = "Params: (%s)" % ", ".join(params)
-    #else:
+    # else:
     #    sig = "Params: (NONE)"
-    #templ = "{description}\n\n" + sig
-    #return make_entry(func, name=name, templ=utoascii(templ),
+    # templ = "{description}\n\n" + sig
+    # return make_entry(func, name=name, templ=utoascii(templ),
     #                  description=description)
     return make_entry(func, name=name, description=description, params=params)
 
@@ -175,7 +184,7 @@ def make_class_entry(klass, description=None, ignored_methods=[], params=None):
     output.append(make_entry(klass, description=description, params=params))
     for func in klass.in_category(DoxyFunction):
         if func.name() not in ignored_methods:
-            name = klass.name() + '::' + func.name()
+            name = klass.name() + "::" + func.name()
             output.append(make_func_entry(func, name=name))
     return "\n\n".join(output)
 
@@ -210,9 +219,11 @@ def make_block_entry(di, block):
     # the make function.
     output = []
     output.append(make_class_entry(block, description=super_description))
-    output.append(make_func_entry(make_func, description=super_description,
-                                  params=block.params))
+    output.append(
+        make_func_entry(make_func, description=super_description, params=block.params)
+    )
     return "\n\n".join(output)
+
 
 def make_block2_entry(di, block):
     """
@@ -223,30 +234,44 @@ def make_block2_entry(di, block):
     # For new style blocks all the relevant documentation should be
     # associated with the 'make' method.
     class_description = combine_descriptions(block)
-    make_func = block.get_member('make', DoxyFunction)
+    make_func = block.get_member("make", DoxyFunction)
     make_description = combine_descriptions(make_func)
-    description = class_description + "\n\nConstructor Specific Documentation:\n\n" + make_description
+    description = (
+        class_description
+        + "\n\nConstructor Specific Documentation:\n\n"
+        + make_description
+    )
     # Associate the combined description with the class and
     # the make function.
     output = []
-    output.append(make_class_entry(
-            block, description=description,
-            ignored_methods=['make'], params=make_func.params))
-    makename = block.name() + '::make'
-    output.append(make_func_entry(
-            make_func, name=makename, description=description,
-            params=make_func.params))
+    output.append(
+        make_class_entry(
+            block,
+            description=description,
+            ignored_methods=["make"],
+            params=make_func.params,
+        )
+    )
+    makename = block.name() + "::make"
+    output.append(
+        make_func_entry(
+            make_func, name=makename, description=description, params=make_func.params
+        )
+    )
     return "\n\n".join(output)
+
 
 def make_swig_interface_file(di, swigdocfilename, custom_output=None):
 
-    output = ["""
+    output = [
+        """
 /*
  * This file was automatically generated using swig_doc.py.
  *
  * Any changes to it will be lost next time it is regenerated.
  */
-"""]
+"""
+    ]
 
     if custom_output is not None:
         output.append(custom_output)
@@ -264,50 +289,57 @@ def make_swig_interface_file(di, swigdocfilename, custom_output=None):
                 make_funcs.add(make_func.name())
                 output.append(make_block_entry(di, block))
         except block.ParsingError:
-            sys.stderr.write('Parsing error for block {0}\n'.format(block.name()))
+            sys.stderr.write("Parsing error for block {0}\n".format(block.name()))
             raise
 
     for block in blocks2:
         try:
-            make_func = block.get_member('make', DoxyFunction)
-            make_func_name = block.name() +'::make'
+            make_func = block.get_member("make", DoxyFunction)
+            make_func_name = block.name() + "::make"
             # Don't want to risk writing to output twice.
             if make_func_name not in make_funcs:
                 make_funcs.add(make_func_name)
                 output.append(make_block2_entry(di, block))
         except block.ParsingError:
-            sys.stderr.write('Parsing error for block {0}\n'.format(block.name()))
+            sys.stderr.write("Parsing error for block {0}\n".format(block.name()))
             raise
 
     # Create docstrings for functions
     # Don't include the make functions since they have already been dealt with.
-    funcs = [f for f in di.in_category(DoxyFunction)
-             if f.name() not in make_funcs and not f.name().startswith('std::')]
+    funcs = [
+        f
+        for f in di.in_category(DoxyFunction)
+        if f.name() not in make_funcs and not f.name().startswith("std::")
+    ]
     for f in funcs:
         try:
             output.append(make_func_entry(f))
         except f.ParsingError:
-            sys.stderr.write('Parsing error for function {0}\n'.format(f.name()))
+            sys.stderr.write("Parsing error for function {0}\n".format(f.name()))
 
     # Create docstrings for classes
     block_names = [block.name() for block in blocks]
     block_names += [block.name() for block in blocks2]
-    klasses = [k for k in di.in_category(DoxyClass)
-               if k.name() not in block_names and not k.name().startswith('std::')]
+    klasses = [
+        k
+        for k in di.in_category(DoxyClass)
+        if k.name() not in block_names and not k.name().startswith("std::")
+    ]
     for k in klasses:
         try:
             output.append(make_class_entry(k))
         except k.ParsingError:
-            sys.stderr.write('Parsing error for class {0}\n'.format(k.name()))
+            sys.stderr.write("Parsing error for class {0}\n".format(k.name()))
 
     # Docstrings are not created for anything that is not a function or a class.
     # If this excludes anything important please add it here.
 
     output = "\n\n".join(output)
 
-    swig_doc = open(swigdocfilename, 'w')
+    swig_doc = open(swigdocfilename, "w")
     swig_doc.write(output)
     swig_doc.close()
+
 
 if __name__ == "__main__":
     # Parse command line options and set up doxyxml.
@@ -320,12 +352,12 @@ if __name__ == "__main__":
 
     # gnuradio.gr.msq_queue.insert_tail and delete_head create errors unless docstrings are defined!
     # This is presumably a bug in SWIG.
-    #msg_q = di.get_member(u'gr_msg_queue', DoxyClass)
-    #insert_tail = msg_q.get_member(u'insert_tail', DoxyFunction)
-    #delete_head = msg_q.get_member(u'delete_head', DoxyFunction)
+    # msg_q = di.get_member(u'gr_msg_queue', DoxyClass)
+    # insert_tail = msg_q.get_member(u'insert_tail', DoxyFunction)
+    # delete_head = msg_q.get_member(u'delete_head', DoxyFunction)
     output = []
-    #output.append(make_func_entry(insert_tail, name='gr_py_msg_queue__insert_tail'))
-    #output.append(make_func_entry(delete_head, name='gr_py_msg_queue__delete_head'))
+    # output.append(make_func_entry(insert_tail, name='gr_py_msg_queue__insert_tail'))
+    # output.append(make_func_entry(delete_head, name='gr_py_msg_queue__delete_head'))
     custom_output = "\n\n".join(output)
 
     # Generate the docstrings interface file.

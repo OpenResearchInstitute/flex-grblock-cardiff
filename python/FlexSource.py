@@ -27,15 +27,21 @@ from flexclient.Radio import Radio
 from time import sleep
 import flexclient.DataHandler
 
+
 class FlexSource(gr.sync_block):
     """
     Source block for FLEX radio connection, streaming audio data
     """
+
     def __init__(self, serial):
-        gr.sync_block.__init__(self,
+        gr.sync_block.__init__(
+            self,
             name="FlexSource",
             in_sig=None,
-            out_sig=[numpy.float32, ])
+            out_sig=[
+                numpy.float32,
+            ],
+        )
         self.serial = serial
 
         self.smartLink = SmartLink()
@@ -49,7 +55,7 @@ class FlexSource(gr.sync_block):
             receiveThread.start()
 
             self.flexRadio.UpdateAntList()
-            self.flexRadio.SendCommand('sub slice all')
+            self.flexRadio.SendCommand("sub slice all")
             self.flexRadio.SendCommand("sub pan all")
 
             self.flexRadio.CreateAudioStream(False)
@@ -63,14 +69,15 @@ class FlexSource(gr.sync_block):
             # raise exception in GR interface
             return
 
-
     def work(self, input_items, output_items):
         out = output_items[0]
         # if self.flexRadio.RxAudioStreamer.isCompressed:
-            # do Opus decompression
+        # do Opus decompression
 
         """ Queue() implementation"""
-        out_len = min(len(output_items[0]), self.flexRadio.RxAudioStreamer.outBuffer.qsize())
+        out_len = min(
+            len(output_items[0]), self.flexRadio.RxAudioStreamer.outBuffer.qsize()
+        )
         # print(out_len, end=" ")
         if out_len == 0:
             return 0
@@ -79,9 +86,8 @@ class FlexSource(gr.sync_block):
         for i in range(out_len):
             temp.append(self.flexRadio.RxAudioStreamer.outBuffer.get_nowait())
         out[:out_len] = numpy.array(temp)
-        
-        return out_len
 
+        return out_len
 
     def setFreq(self, newFreq):
         self.flexRadio.GetSlice(0).Tune(newFreq)
@@ -91,4 +97,3 @@ class FlexSource(gr.sync_block):
 
     def setAntenna(self, newAnt):
         self.flexRadio.GetSlice(0).Set(rxant=newAnt)
-
