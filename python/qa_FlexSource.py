@@ -23,8 +23,8 @@ from gnuradio import gr, gr_unittest
 from gnuradio import blocks
 from FlexSource import FlexSource
 
-class qa_FlexSource(gr_unittest.TestCase):
 
+class qa_FlexSource(gr_unittest.TestCase):
     def setUp(self):
         self.tb = gr.top_block()
 
@@ -37,5 +37,5 @@ class qa_FlexSource(gr_unittest.TestCase):
         # check data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gr_unittest.run(qa_FlexSource)

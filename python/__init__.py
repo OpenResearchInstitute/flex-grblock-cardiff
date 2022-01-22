@@ -18,10 +18,10 @@
 
 # The presence of this file turns this directory into a Python package
 
-'''
+"""
 This is the GNU Radio GNU_FLEX module. Place your Python package
 description here (python/__init__.py).
-'''
+"""
 from __future__ import unicode_literals
 
 # import swig generated symbols into the gnu_flex namespace
@@ -33,4 +33,5 @@ except ImportError:
 
 # import any pure python here
 from .FlexSource import FlexSource
+
 #
